@@ -1,17 +1,23 @@
 package com.ryusw.logview.service;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.os.Build;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import com.ryusw.logview.R;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -25,13 +31,13 @@ public class LogService extends Service {
 
     private WindowManager.LayoutParams mRootViewParams;
     private WindowManager mWindowManager;
-    private View mLogView;
+    private View mViewLog;
     private DisposableObserver<String> mLogObserver;
     private Observable<String> mLogProcessRecorder;
     private TextView mTvLog;
     private Button mBtnStart;
     private Button mBtnStop;
-    private Button mBtnClose;
+    private ImageButton mBtnClose;
     private float mTouchX = 0f;
     private float mTouchY = 0f;
     private int mViewX = 0;
@@ -39,8 +45,18 @@ public class LogService extends Service {
     private String mLogString = "";
     private Boolean mIsRunning = false;
     private static final int logBufferSize = 4 * 1024;
+    private List<String> filterList = new ArrayList<>();
 
-    public LogService() {
+    @Nullable
+    @Override
+    public IBinder onBind(@NonNull Intent intent) {
+        return null;
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+
         int managerType;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             managerType = WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY;
@@ -96,20 +112,22 @@ public class LogService extends Service {
                 mIsRunning = false;
             }
         };
-    }
 
-    @Nullable
-    @Override
-    public IBinder onBind(@NonNull Intent intent) {
-        return null;
-    }
+        filterList.add("ViewRoot's Touch Event");
+        filterList.add("Accessing hidden");
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        mWindowManager.addView(mLogView, mRootViewParams);
+        LayoutInflater layoutInflater = (LayoutInflater) getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        mViewLog = layoutInflater.inflate(R.layout.view_log, null);
 
-        mLogView.setOnTouchListener(new View.OnTouchListener() {
+        mBtnClose = mViewLog.findViewById(R.id.btn_close);
+        mBtnStop = mViewLog.findViewById(R.id.btn_stop);
+        mBtnStart = mViewLog.findViewById(R.id.btn_start);
+
+        mTvLog = mViewLog.findViewById(R.id.tv_log);
+
+        mWindowManager.addView(mViewLog, mRootViewParams);
+
+        mViewLog.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 switch (motionEvent.getAction()){
@@ -126,7 +144,7 @@ public class LogService extends Service {
                         mRootViewParams.x = mViewX + x;
                         mRootViewParams.y = mViewY + y;
 
-                        mWindowManager.updateViewLayout(mLogView, mRootViewParams);
+                        mWindowManager.updateViewLayout(mViewLog, mRootViewParams);
                         return true;
                 }
                 return false;
@@ -158,7 +176,7 @@ public class LogService extends Service {
         mBtnClose.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mWindowManager.removeView(mLogView);
+                mWindowManager.removeView(mViewLog);
                 mIsRunning = false;
                 stopSelf();
             }
@@ -166,9 +184,14 @@ public class LogService extends Service {
     }
 
     private void writeLogView(String logString){
-        // Todo Change Thread
         mLogString += logString;
-        mTvLog.setText(mLogString);
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable(){
+            @Override
+            public void run() {
+                mTvLog.setText(mLogString);
+            }
+        });
     }
 
     private void clearLog() throws IOException, InterruptedException {
@@ -181,10 +204,6 @@ public class LogService extends Service {
     }
 
     private boolean checkLogFilter(String log){
-        List<String> filterList = new ArrayList<>();
-        filterList.add("ViewRoot's Touch Event");
-        filterList.add("Accessing hidden");
-
         for(String filterString : filterList){
             if(log.contains(filterString)){
                 return true;

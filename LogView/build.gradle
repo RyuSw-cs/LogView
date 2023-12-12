@@ -35,11 +35,6 @@ android {
 }
 
 dependencies {
-    /* gradle */
-    implementation 'com.android.tools.build:gradle:7.4.0'
-
-    /* lifecycle service */
-    implementation 'androidx.lifecycle:lifecycle-extensions:2.0.0'
 
     /* rxjava */
     implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
