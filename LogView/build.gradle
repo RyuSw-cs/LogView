@@ -1,3 +1,5 @@
+import java.text.SimpleDateFormat
+
 plugins {
     id 'com.android.library'
 }
@@ -7,8 +9,7 @@ android {
     compileSdk 31
 
     defaultConfig {
-        minSdk 24
-
+        minSdk 14
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
     }
@@ -23,12 +24,19 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    libraryVariants.configureEach { variant ->
+        variant.outputs.configureEach {
+            def df = new SimpleDateFormat("yyyyMMdd")
+            df.setTimeZone(TimeZone.getDefault())
+            outputFileName = "${project.name}_v${module_version}_${variant.buildType.name}_${df.format(new Date())}.aar"
+        }
+    }
 }
 
 dependencies {
-
     /* gradle */
-    implementation 'com.android.tools.build:gradle:7.0.2'
+    implementation 'com.android.tools.build:gradle:7.4.0'
 
     /* lifecycle service */
     implementation 'androidx.lifecycle:lifecycle-extensions:2.0.0'
@@ -38,9 +46,37 @@ dependencies {
     implementation 'io.reactivex.rxjava3:rxjava:3.0.7'
 
     /* base */
-    implementation 'androidx.appcompat:appcompat:1.0.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.10.0'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
+
+ext {
+    module_version      =   "1.0.0.0"
+
+    def df = new SimpleDateFormat("yyyy.MM.dd")
+    df.setTimeZone(TimeZone.getDefault())
+    releaseModule_path  =   "${rootProject.rootDir}/LogViewLib${df.format(new Date())}(v${module_version}-release)"
+}
+
+task releaseModulePath(type : Delete){
+    delete releaseModule_path
+}
+
+task makeModule(dependsOn : releaseModulePath){
+    doLast{
+        println "************************************************************************************"
+        println "************************* LogView v$module_version release start *************************"
+        println "************************************************************************************"
+
+        copy{
+            from "build/outputs/aar"
+            into "$releaseModule_path/$project.name"
+        }
+    }
+}
+
+makeModule.mustRunAfter clean
+makeModule.dependsOn('clean', 'assemble')

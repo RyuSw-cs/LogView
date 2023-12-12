@@ -35,6 +35,6 @@ public class LogViewApi {
     }
 
     private boolean checkPermission(){
-        return ContextCompat.checkSelfPermission(mContext, Manifest.permission.SYSTEM_ALERT_WINDOW) != PackageManager.PERMISSION_GRANTED
+        return ContextCompat.checkSelfPermission(mContext, Manifest.permission.SYSTEM_ALERT_WINDOW) != PackageManager.PERMISSION_GRANTED;
     }
 }
