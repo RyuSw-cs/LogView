@@ -34,6 +34,10 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btn_create_log).setOnClickListener {
             Log.d(TAG, "onCreate: log create")
         }
+
+        findViewById<Button>(R.id.btn_exception).setOnClickListener {
+            throw Exception("에러")
+        }
     }
     companion object{
         private const val TAG = "MainActivity..."

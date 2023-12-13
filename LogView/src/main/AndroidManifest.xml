@@ -3,10 +3,10 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
 
     <application>
-        <service android:name=".service.LogService"
+        <service android:name="com.ryusw.logview.service.LogService"
             android:exported="true"
             android:enabled="true"
-            android:process="externalProcess"
+            android:process=":externalProcess"
             android:permission="android.permission.SYSTEM_ALERT_WINDOW"/>
     </application>
 </manifest>
