@@ -23,8 +23,8 @@ class MainActivity : AppCompatActivity() {
                             Toast.makeText(this@MainActivity, "success", Toast.LENGTH_SHORT).show()
                         }
 
-                        override fun onFailure(errorCode: Int) {
-                            Toast.makeText(this@MainActivity, "fail, code = $errorCode", Toast.LENGTH_SHORT).show()
+                        override fun onFailure(errorCode: Int, errorMsg : String) {
+                            Toast.makeText(this@MainActivity, "실패, $errorMsg", Toast.LENGTH_SHORT).show()
                         }
                     })
                     .build()

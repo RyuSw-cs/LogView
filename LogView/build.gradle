@@ -15,6 +15,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -37,8 +41,8 @@ android {
 dependencies {
 
     /* rxjava */
-    implementation 'io.reactivex.rxjava3:rxandroid:3.0.0'
-    implementation 'io.reactivex.rxjava3:rxjava:3.0.7'
+    compileOnly 'io.reactivex.rxjava3:rxandroid:3.0.0'      // 라이브러리이기 때문에 complie 시점에만 해당 기능이 동작
+    compileOnly 'io.reactivex.rxjava3:rxjava:3.0.7'
 
     /* base */
     implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -49,24 +53,25 @@ dependencies {
 }
 
 ext {
-    module_version      =   "1.0.0.0"
+    module_version = "1.0.0.0"
 
     def df = new SimpleDateFormat("yyyy.MM.dd")
     df.setTimeZone(TimeZone.getDefault())
-    releaseModule_path  =   "${rootProject.rootDir}/LogViewLib${df.format(new Date())}(v${module_version}-release)"
+    releaseModule_path = "${rootProject.rootDir}/LogViewLib${df.format(new Date())}(v${module_version}-release)"
 }
 
-task releaseModulePath(type : Delete){
+tasks.register('releaseModulePath', Delete) {
     delete releaseModule_path
 }
 
-task makeModule(dependsOn : releaseModulePath){
-    doLast{
+tasks.register('makeModule') {
+    dependsOn releaseModulePath
+    doLast {
         println "************************************************************************************"
-        println "************************* LogView v$module_version release start *************************"
+        println "***************************** LogView v$module_version release *****************************"
         println "************************************************************************************"
 
-        copy{
+        copy {
             from "build/outputs/aar"
             into "$releaseModule_path/$project.name"
         }
@@ -74,4 +79,4 @@ task makeModule(dependsOn : releaseModulePath){
 }
 
 makeModule.mustRunAfter clean
-makeModule.dependsOn('clean', 'assemble')
+makeModule.dependsOn(['releaseModulePath', 'clean', 'assemble'])

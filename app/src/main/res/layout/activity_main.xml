@@ -11,10 +11,21 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="create log"
-        app:layout_constraintBottom_toTopOf="@id/btn_start_log_view"
+        app:layout_constraintVertical_chainStyle="spread_inside"
+        app:layout_constraintBottom_toTopOf="@id/btn_exception"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btn_exception"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="exception"
+        app:layout_constraintBottom_toTopOf="@id/btn_start_log_view"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btn_create_log" />
 
     <Button
         android:id="@+id/btn_start_log_view"
@@ -24,6 +35,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btn_create_log" />
+        app:layout_constraintTop_toBottomOf="@id/btn_exception" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
