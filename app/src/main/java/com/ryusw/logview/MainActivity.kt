@@ -6,8 +6,9 @@ import android.util.Log
 import android.widget.Button
 import android.widget.Toast
 import com.ryusw.logview.api.LogViewApi
-import com.ryusw.logview.callback.LogResultCallBackInterface
+import com.ryusw.logview.callback.LogInitCallBackInterface
 import com.ryusw.logview.context.LogViewInitContext
+
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -18,16 +19,17 @@ class MainActivity : AppCompatActivity() {
             LogViewApi(
                 this,
                 LogViewInitContext.Builder()
-                    .setLogResultCallBackInterface(object : LogResultCallBackInterface{
+                    .setLogFilter(arrayOf("Accessing hidden", "View"))
+                    .setLogResultCallBackInterface(object : LogInitCallBackInterface{
                         override fun onSuccess() {
                             Toast.makeText(this@MainActivity, "success", Toast.LENGTH_SHORT).show()
                         }
 
-                        override fun onFailure(errorCode: Int, errorMsg : String) {
-                            Toast.makeText(this@MainActivity, "실패, $errorMsg", Toast.LENGTH_SHORT).show()
+                        override fun onFailure(errorCode: Int, errorMsg: String?) {
+                            Toast.makeText(this@MainActivity, "fail : $errorMsg", Toast.LENGTH_SHORT).show()
                         }
-                    })
-                    .build()
+
+                    }).build()
             ).startLogView()
         }
 

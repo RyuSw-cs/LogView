@@ -1,55 +1,34 @@
 package com.ryusw.logview.service;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.os.Build;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
-import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-
-import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.observers.DisposableObserver;
-import io.reactivex.rxjava3.schedulers.Schedulers;
+import com.ryusw.logview.LogDataManger;
+import com.ryusw.logview.callback.LogInitCallBackInterface;
+import com.ryusw.logview.callback.LogObservingCallBackInterface;
+import com.ryusw.logview.view.LogView;
 
 public class LogService extends Service {
-
+    private static final String NOTIFICATION_CHANNEL = "LOGVIEW_NOTIFICATION_CHANNEL";
     private WindowManager.LayoutParams mRootViewParams;
     private WindowManager mWindowManager;
-    private ViewGroup mViewLog;
-    private DisposableObserver<String> mLogObserver;
-    private Observable<String> mLogProcessRecorder;
-    private TextView mTvLog;
-    private Button mBtnStart;
-    private Button mBtnStop;
-    private ImageButton mBtnClose;
+    private LogView mViewLog;
     private float mTouchX = 0f;
     private float mTouchY = 0f;
     private int mViewX = 0;
     private int mViewY = 0;
-    private String mLogString = "";
     private Boolean mIsRunning = false;
-    private static final int logBufferSize = 4 * 1024;
-    private List<String> filterList = new ArrayList<>();
+    private LogInitCallBackInterface logInitCallBackInterface;
 
     @Nullable
     @Override
@@ -58,18 +37,19 @@ public class LogService extends Service {
     }
 
     @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        logInitCallBackInterface = intent.getParcelableExtra("INIT_INTERFACE");
+        return START_NOT_STICKY;
+    }
+
+    @Override
     public void onCreate() {
         super.onCreate();
 
-        LayoutInflater layoutInflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        mViewLog = (ViewGroup) layoutInflater.inflate(getResourceId("layout", "view_log"), null);
-
-        mBtnClose = (ImageButton) mViewLog.findViewById(getResourceId("id", "btn_close"));
-        mBtnStop = (Button) mViewLog.findViewById(getResourceId("id", "btn_stop"));
-        mBtnStart = (Button) mViewLog.findViewById(getResourceId("id", "btn_start"));
-        mTvLog = (TextView) mViewLog.findViewById(getResourceId("id", "tv_log"));
-
-        mBtnClose.setImageResource(getResourceId("drawable", "icon_close"));
+        // 오레오 이상에서 Notification 생성해야 Foreground Service 사용 가능
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotification();
+        }
 
         int managerType;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -88,47 +68,7 @@ public class LogService extends Service {
 
         mWindowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
 
-        mLogProcessRecorder = Observable.create(emitter -> {
-            clearLog();
-
-            String currentPid = "--pid=" + android.os.Process.myPid();
-            String[] logCommand = {"logcat", "-v", currentPid};
-            ProcessBuilder logProcessBuilder = new ProcessBuilder(logCommand);
-
-            Process logProcess = logProcessBuilder.start();
-            BufferedReader br = new BufferedReader(new InputStreamReader(logProcess.getInputStream()), logBufferSize);
-            String separator = System.getProperty("line.separator");
-
-            String line = br.readLine();
-
-            while (line != null) {
-                emitter.onNext(line + separator);
-                line = br.readLine();
-            }
-        });
-
-        mLogObserver = new DisposableObserver<String>() {
-            @Override
-            public void onNext(@NonNull String s) {
-                if (!checkLogFilter(s)) {
-                    writeLogView(s);
-                }
-            }
-
-            @Override
-            public void onError(@NonNull Throwable e) {
-                stopSelf();
-                mIsRunning = false;
-            }
-
-            @Override
-            public void onComplete() {
-                mIsRunning = false;
-            }
-        };
-
-        filterList.add("ViewRoot's Touch Event");
-        filterList.add("Accessing hidden");
+        mViewLog = new LogView(this);
 
         mViewLog.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -153,38 +93,82 @@ public class LogService extends Service {
                 return false;
             }
         });
-        mBtnStart.setOnClickListener(new View.OnClickListener() {
+
+        mViewLog.setControlBtnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                // 실행
                 if (!mIsRunning) {
-                    mLogProcessRecorder.subscribeOn(Schedulers.io()).subscribe(mLogObserver);
                     mIsRunning = true;
+                    mViewLog.setControlBtnImg(true);
+                    LogDataManger.StartLog(true, new LogObservingCallBackInterface() {
+                        @Override
+                        public void onSuccess(String log) {
+                            if (!LogDataManger.IsExistLogFilter(log)) {
+                                mViewLog.setLogText(log);
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(int errorCode, String errorMsg) {
+                            logInitCallBackInterface.onFailure(errorCode, errorMsg);
+                        }
+                    });
                 } else {
-                    mLogString = "";
-                    mTvLog.setText(mLogString);
-                }
-            }
-        });
-
-        mBtnStop.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (mIsRunning) {
+                    mViewLog.setControlBtnImg(false);
                     mIsRunning = false;
-                    mLogObserver.dispose();
                 }
             }
         });
-
-        mBtnClose.setOnClickListener(new View.OnClickListener() {
+        mViewLog.setStopBtnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mIsRunning = false;
+                LogDataManger.StopLog();
+            }
+        });
+
+        mViewLog.setSettingBtnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //TODO 세팅버튼 레이아웃 추가
+            }
+        });
+
+        mViewLog.setCloseBtnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                LogDataManger.StopLog();
+                mWindowManager.removeView(mViewLog);
                 stopSelf();
             }
         });
 
         mWindowManager.addView(mViewLog, mRootViewParams);
+    }
+
+    /**
+     * Notification 생성
+     * */
+    private void createNotification() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            String title = getString(getResourceId("string", "notification_title"));
+            String content = getString(getResourceId("string", "notification_content"));
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+
+            NotificationChannel notificationChannel = new NotificationChannel(NOTIFICATION_CHANNEL, title, importance);
+            notificationChannel.setDescription(content);
+
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(notificationChannel);
+
+            Notification notification = new Notification.Builder(this, NOTIFICATION_CHANNEL)
+                    .setContentTitle(title)
+                    .setContentText(content)
+                    .setSmallIcon(getResourceId("drawable", "icon_setting"))
+                    .build();
+
+            startForeground(1, notification);
+        }
     }
 
     @Override
@@ -197,37 +181,13 @@ public class LogService extends Service {
         }
     }
 
-    private void writeLogView(String logString) {
-        mLogString += logString;
-        Handler handler = new Handler(Looper.getMainLooper());
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                if (mLogString != null) {
-                    mTvLog.setText(mLogString);
-                }
-            }
-        });
-    }
-
-    private void clearLog() throws IOException, InterruptedException {
-        String[] clearLogCommand = {"logcat", "-c"};
-        ProcessBuilder logProcessBuilder = new ProcessBuilder(clearLogCommand);
-        Process logProcess = logProcessBuilder.start();
-
-        logProcess.waitFor();
-        logProcess.destroy();
-    }
-
-    private boolean checkLogFilter(String log) {
-        for (String filterString : filterList) {
-            if (log.contains(filterString)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
+    /**
+     * 난독화 설정으로 인해 resId를 못가져오는 현상을 막기 위함
+     * @param type 리소스 타입 (id, drawable, layout...)
+     * @param name 가져오려는 리소스 이름
+     * @return 라이브러리에 실제 할당된 resId
+     * @author swyu
+     */
     private int getResourceId(String type, String name) {
         return this.getResources().getIdentifier(name, type, getPackageName());
     }

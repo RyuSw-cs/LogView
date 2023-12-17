@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notification_content">로그뷰가 실행중입니다.</string>
+    <string name="notification_title">로그뷰</string>
+</resources>

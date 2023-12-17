@@ -36,10 +36,6 @@ android {
 
 dependencies {
 
-    /* rxjava */
-    compileOnly 'io.reactivex.rxjava3:rxandroid:3.0.0'      // 라이브러리이기 때문에 complie 시점에만 해당 기능이 동작
-    compileOnly 'io.reactivex.rxjava3:rxjava:3.0.7'
-
     /* base */
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.10.0'
