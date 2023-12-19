@@ -3,6 +3,11 @@
     <color name="white">#ffffff</color>
     <color name="appbar_color">#FF8400</color>
     <color name="black">#000000</color>
-    <color name="log_background">#60000000</color>
+    <color name="log_background">#2B2B2B</color>
     <color name="transparent">#00000000</color>
+
+    <color name="log_debug_color">#368BBD</color>
+    <color name="log_info_color">#6BB342</color>
+    <color name="log_warn_color">#E4DC14</color>
+    <color name="log_error_color">#F13E36</color>
 </resources>

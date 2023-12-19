@@ -124,11 +124,14 @@ public class LogService extends Service {
                     mIsRunning = true;
                     mViewLog.setControlBtnImg(true);
 
+                    mViewLog.clearLogText();
                     // 프로세스가 다르므로 pid를 설정해야함.
                     LogDataManger.getInstance().startLog(true, new LogObservingCallBackInterface() {
                         @Override
                         public void onSuccess(String log) {
-                            mViewLog.setErrorViewVisibility(false, LogViewStateCode.NO_ERROR_CODE, null);
+                            if(mIsRunning){
+                                mViewLog.setErrorViewVisibility(false, LogViewStateCode.NO_ERROR_CODE, null);
+                            }
 
                             if (!LogDataManger.getInstance().isExistLogFilter(log)) {
                                 mViewLog.setLogText(log);
@@ -137,6 +140,9 @@ public class LogService extends Service {
                         @Override
                         public void onFailure(int errorCode, String errorMsg) {
                             mViewLog.setErrorViewVisibility(true, errorCode, errorMsg);
+                            mViewLog.setControlBtnImg(false);
+                            mIsRunning = false;
+                            LogDataManger.getInstance().stopLog();
                         }
                     });
                 } else {
@@ -164,7 +170,6 @@ public class LogService extends Service {
             @Override
             public void onClick(View view) {
                 LogDataManger.getInstance().stopLog();
-                mWindowManager.removeView(mViewLog);
                 stopSelf();
             }
         });

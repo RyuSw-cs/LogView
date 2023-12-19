@@ -9,6 +9,7 @@ import com.ryusw.logview.config.LogViewResultMsg;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.InterruptedIOException;
 import java.util.Arrays;
 
 /**
@@ -20,6 +21,8 @@ public class LogDataManger {
     private String[] logFilter = new String[0];
     private final int logBufferSize = 2048 * 12;
     private Process logProcess;
+    private BufferedReader br;
+    private Thread logThread;
     private String pid;
 
     private LogDataManger() {
@@ -129,14 +132,13 @@ public class LogDataManger {
             }
         }
         // 서브 스레드 실행
-        new Thread(new Runnable() {
+        logThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 // 프로세스 아이디를 기준으로 로그 검색
                 String[] logCommand = {"logcat", "-v", "brief", pid};
                 ProcessBuilder logProcessBuilder = new ProcessBuilder(logCommand);
 
-                BufferedReader br;
                 try {
                     logProcess = logProcessBuilder.start();
                     br = new BufferedReader(new InputStreamReader(logProcess.getInputStream()), logBufferSize);
@@ -150,14 +152,16 @@ public class LogDataManger {
                         br.close();
                     }
 
-                    while(line != null){
-                        line = br.readLine() + separator;
+                    while (line != null) {
                         callback.onSuccess(line);
+                        line = separator + br.readLine();
                     }
 
                     br.close();
-
-                } catch (Exception e) {
+                } catch (InterruptedIOException interruptedException){
+                    interruptedException.printStackTrace();
+                    stopLog();
+                } catch(Exception e) {
                     e.printStackTrace();
                     callback.onFailure(LogResultCode.FAIL_LOG_OBSERVER, LogViewResultMsg.FAIL_LOG_OBSERVING_ERROR_MSG);
                     if (logProcess != null) {
@@ -165,7 +169,8 @@ public class LogDataManger {
                     }
                 }
             }
-        }).start();
+        });
+        logThread.start();
     }
 
     /**
@@ -177,13 +182,26 @@ public class LogDataManger {
         if (logProcess == null) {
             return;
         }
-        // 실행중인 로그 프로세스 종료
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            if (logProcess.isAlive()) {
-                logProcess.destroyForcibly();
+
+        if(!logThread.isAlive()){
+            return;
+        }
+
+        try {
+            if(logThread.isAlive()){
+                // 실행중인 로그 프로세스 종료
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    if (logProcess.isAlive()) {
+                        logProcess.destroyForcibly();
+                    }
+                } else {
+                    logProcess.destroy();
+                }
+                logThread.interrupt();
             }
-        } else {
-            logProcess.destroy();
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 }
+

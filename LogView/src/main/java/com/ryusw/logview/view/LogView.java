@@ -1,19 +1,24 @@
 package com.ryusw.logview.view;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.style.ForegroundColorSpan;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
 import androidx.core.widget.NestedScrollView;
 
 /**
@@ -30,9 +35,11 @@ public class LogView extends ConstraintLayout {
     private ImageButton mBtnClose;
     private TextView mTvLog;
     private NestedScrollView mScrollView;
-    private String mLog;
+    private String mLog = "";
     private Handler mHandler = new Handler(Looper.getMainLooper());
     private boolean mAutoScrollMode = false;
+    private SpannableStringBuilder spBuilder = new SpannableStringBuilder();
+    private int mCurrentLogColor = Color.WHITE;
 
     public LogView(@NonNull Context context) {
         super(context);
@@ -82,6 +89,7 @@ public class LogView extends ConstraintLayout {
             @Override
             public void run() {
                 if(visibility){
+                    mErrorViewGroup.bringToFront();
                     mErrorViewGroup.setVisibility(VISIBLE);
                     TextView contentView = mErrorViewGroup.findViewById(getResourceId("id", "tv_error_text"));
                     String content = "오류" + "(" + errorCode + ")" + " : " + errorMsg;
@@ -146,19 +154,59 @@ public class LogView extends ConstraintLayout {
      * @param log Process에서 받은 Log String
      * @author swyu
      */
-    public void setLogText(String log) {
+    public synchronized void setLogText(String log) {
         // Sub Thread에서 텍스트 추가
-        this.mLog += log;
+        String logLevel = log.substring(1, 3);
+        setLogColor(logLevel, log);
         // Main Thread에서 View Update
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                mTvLog.setText(mLog);
+                mTvLog.setText(spBuilder);
+
                 if(mAutoScrollMode){
                     mScrollView.smoothScrollTo(0, mScrollView.getChildAt(0).getHeight());
                 }
             }
         });
+    }
+
+    /**
+     * 로그색상 지정
+     * */
+    private void setLogColor(String logType, String log){
+        String colorResName = "";
+        // 줄바꿈 상태라면 기존 선택된 색상으로 설정
+        switch (logType){
+            case "D/":
+                colorResName = "log_debug_color";
+                break;
+            case "I/":
+                colorResName = "log_info_color";
+                break;
+            case "W/" :
+                colorResName = "log_warn_color";
+                break;
+            case "E/" :
+                colorResName = "log_error_color";
+                break;
+            default:
+                break;
+        }
+
+        if(!colorResName.isEmpty()){
+            mCurrentLogColor = ContextCompat.getColor(getContext(), getResourceId("color", colorResName));
+        }
+
+        spBuilder.insert(mLog.length(), log);
+        spBuilder.setSpan(new ForegroundColorSpan(mCurrentLogColor), mLog.length(), mLog.length() + log.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        mLog += log;
+    }
+
+
+    public void clearLogText(){
+        this.mLog = "";
     }
 
     /**
