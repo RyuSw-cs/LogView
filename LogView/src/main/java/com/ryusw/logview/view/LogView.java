@@ -4,30 +4,35 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.widget.NestedScrollView;
 
 /**
  * UI 관련 로직 구현
  * */
 public class LogView extends ConstraintLayout {
 
-    private ViewGroup mViewGroup;
+    private ViewGroup mMainViewGroup;
+    private ViewGroup mAppbarViewGroup;
+    private ViewGroup mErrorViewGroup;
     private ImageButton mBtnSetting;
     private ImageButton mBtnControl;
     private ImageButton mBtnStop;
     private ImageButton mBtnClose;
     private TextView mTvLog;
+    private NestedScrollView mScrollView;
     private String mLog;
     private Handler mHandler = new Handler(Looper.getMainLooper());
+    private boolean mAutoScrollMode = false;
 
     public LogView(@NonNull Context context) {
         super(context);
@@ -50,16 +55,42 @@ public class LogView extends ConstraintLayout {
      * @author swyu
      * */
     private void doCreateLayout(Context context) {
-        mViewGroup = (ViewGroup) LayoutInflater.from(context).inflate(getResourceId("layout", "view_log"), this, false);
+        // main
+        mMainViewGroup = (ViewGroup) LayoutInflater.from(context).inflate(getResourceId("layout", "view_log"), this, false);
+        mScrollView = mMainViewGroup.findViewById(getResourceId("id", "sv_log"));
+        mTvLog = mMainViewGroup.findViewById(getResourceId("id", "tv_log"));
 
-        mBtnControl = mViewGroup.findViewById(getResourceId("id", "btn_control"));
-        mBtnStop = mViewGroup.findViewById(getResourceId("id", "btn_stop"));
-        mBtnClose = mViewGroup.findViewById(getResourceId("id", "btn_close"));
-        mBtnSetting = mViewGroup.findViewById(getResourceId("id", "btn_setting"));
+        // appbar
+        mAppbarViewGroup = mMainViewGroup.findViewById(getResourceId("id", "layout_appbar"));
+        mBtnControl = mAppbarViewGroup.findViewById(getResourceId("id", "btn_control"));
+        mBtnStop = mAppbarViewGroup.findViewById(getResourceId("id", "btn_stop"));
+        mBtnClose = mAppbarViewGroup.findViewById(getResourceId("id", "btn_close"));
+        mBtnSetting = mAppbarViewGroup.findViewById(getResourceId("id", "btn_setting"));
 
-        mTvLog = mViewGroup.findViewById(getResourceId("id", "tv_log"));
+        // error
+        mErrorViewGroup = mMainViewGroup.findViewById(getResourceId("id", "layout_error"));
 
-        addView(mViewGroup);
+        addView(mMainViewGroup);
+    }
+
+    public void setAutoScrollMode(boolean flag){
+        mAutoScrollMode = flag;
+    }
+
+    public void setErrorViewVisibility(boolean visibility, int errorCode, String errorMsg){
+        mHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if(visibility){
+                    mErrorViewGroup.setVisibility(VISIBLE);
+                    TextView contentView = mErrorViewGroup.findViewById(getResourceId("id", "tv_error_text"));
+                    String content = "오류" + "(" + errorCode + ")" + " : " + errorMsg;
+                    contentView.setText(content);
+                } else {
+                    mErrorViewGroup.setVisibility(GONE);
+                }
+            }
+        });
     }
 
     /**
@@ -123,6 +154,9 @@ public class LogView extends ConstraintLayout {
             @Override
             public void run() {
                 mTvLog.setText(mLog);
+                if(mAutoScrollMode){
+                    mScrollView.smoothScrollTo(0, mScrollView.getChildAt(0).getHeight());
+                }
             }
         });
     }

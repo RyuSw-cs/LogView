@@ -5,17 +5,23 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.IBinder;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import com.ryusw.logview.LogDataManger;
-import com.ryusw.logview.callback.LogInitCallBackInterface;
 import com.ryusw.logview.callback.LogObservingCallBackInterface;
+import com.ryusw.logview.config.LogConstants;
+import com.ryusw.logview.config.LogResultCode;
+import com.ryusw.logview.config.LogViewResultMsg;
+import com.ryusw.logview.config.LogViewStateCode;
 import com.ryusw.logview.view.LogView;
 
 public class LogService extends Service {
@@ -28,18 +34,34 @@ public class LogService extends Service {
     private int mViewX = 0;
     private int mViewY = 0;
     private Boolean mIsRunning = false;
-    private LogInitCallBackInterface logInitCallBackInterface;
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        // 프로세스가 다르기때문에 Service에서 데이터를 초기화 해야함
+        if (intent != null) {
+            // 로그 필터 설정
+            String[] logFilter = intent.getStringArrayExtra(LogConstants.EXTRATYPE_LOG_FILTER);
+            if (logFilter != null) {
+                LogDataManger.getInstance().setLogFilter(logFilter);
+            }
+
+            // 프로세스 id 설정
+            int appPid = intent.getIntExtra(LogConstants.EXTRATYPE_APP_PROCESS_ID, -1);
+            LogDataManger.getInstance().setAppPid(appPid);
+
+            // 자동 스크롤 모드 설정
+            boolean autoScrollMode = intent.getBooleanExtra(LogConstants.EXTRATYPE_APP_AUTO_SCROLL, false);
+            mViewLog.setAutoScrollMode(autoScrollMode);
+
+            return super.onStartCommand(intent, flags, startId);
+        }
+        return START_NOT_STICKY;
+    }
 
     @Nullable
     @Override
     public IBinder onBind(@NonNull Intent intent) {
         return null;
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        logInitCallBackInterface = intent.getParcelableExtra("INIT_INTERFACE");
-        return START_NOT_STICKY;
     }
 
     @Override
@@ -101,29 +123,33 @@ public class LogService extends Service {
                 if (!mIsRunning) {
                     mIsRunning = true;
                     mViewLog.setControlBtnImg(true);
-                    LogDataManger.StartLog(true, new LogObservingCallBackInterface() {
+
+                    // 프로세스가 다르므로 pid를 설정해야함.
+                    LogDataManger.getInstance().startLog(true, new LogObservingCallBackInterface() {
                         @Override
                         public void onSuccess(String log) {
-                            if (!LogDataManger.IsExistLogFilter(log)) {
+                            mViewLog.setErrorViewVisibility(false, LogViewStateCode.NO_ERROR_CODE, null);
+
+                            if (!LogDataManger.getInstance().isExistLogFilter(log)) {
                                 mViewLog.setLogText(log);
                             }
                         }
-
                         @Override
                         public void onFailure(int errorCode, String errorMsg) {
-                            logInitCallBackInterface.onFailure(errorCode, errorMsg);
+                            mViewLog.setErrorViewVisibility(true, errorCode, errorMsg);
                         }
                     });
                 } else {
                     mViewLog.setControlBtnImg(false);
                     mIsRunning = false;
+                    LogDataManger.getInstance().stopLog();
                 }
             }
         });
         mViewLog.setStopBtnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                LogDataManger.StopLog();
+                LogDataManger.getInstance().stopLog();
             }
         });
 
@@ -137,7 +163,7 @@ public class LogService extends Service {
         mViewLog.setCloseBtnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                LogDataManger.StopLog();
+                LogDataManger.getInstance().stopLog();
                 mWindowManager.removeView(mViewLog);
                 stopSelf();
             }
@@ -148,7 +174,9 @@ public class LogService extends Service {
 
     /**
      * Notification 생성
-     * */
+     *
+     * @author swyu
+     */
     private void createNotification() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             String title = getString(getResourceId("string", "notification_title"));
@@ -167,7 +195,12 @@ public class LogService extends Service {
                     .setSmallIcon(getResourceId("drawable", "icon_setting"))
                     .build();
 
-            startForeground(1, notification);
+            // Android 14이상은 Foreground Service Type을 명시해야함
+            if (Build.VERSION.SDK_INT >= 34) {
+                startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC);
+            } else {
+                startForeground(1, notification);
+            }
         }
     }
 
@@ -183,6 +216,7 @@ public class LogService extends Service {
 
     /**
      * 난독화 설정으로 인해 resId를 못가져오는 현상을 막기 위함
+     *
      * @param type 리소스 타입 (id, drawable, layout...)
      * @param name 가져오려는 리소스 이름
      * @return 라이브러리에 실제 할당된 resId

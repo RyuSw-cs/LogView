@@ -1,18 +1,13 @@
 package com.ryusw.logview.api;
 
-import android.Manifest;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.provider.Settings;
 import android.util.Log;
 
-import androidx.core.content.ContextCompat;
-
-import com.ryusw.logview.LogDataManger;
-import com.ryusw.logview.config.LogViewResultCode;
+import com.ryusw.logview.config.LogConstants;
+import com.ryusw.logview.config.LogResultCode;
 import com.ryusw.logview.config.LogViewResultMsg;
 import com.ryusw.logview.context.LogViewInitContext;
 import com.ryusw.logview.service.LogService;
@@ -33,14 +28,15 @@ public class LogViewApi {
     public void startLogView() {
         if (checkPermission()) {
             Intent serviceIntent = new Intent(mContext, LogService.class);
+            serviceIntent.putExtra(LogConstants.EXTRATYPE_LOG_FILTER, mParams.getLogFilter());
+            serviceIntent.putExtra(LogConstants.EXTRATYPE_APP_PROCESS_ID, mParams.getPid());
+            serviceIntent.putExtra(LogConstants.EXTRATYPE_APP_AUTO_SCROLL, mParams.getAutoScroll());
             mContext.startService(serviceIntent);
 
-            // LogFilter 적용
-            LogDataManger.SetLogFilter(mParams.getLogFilter());
-            mParams.getLogResultCallBackInterface().onSuccess();
+            mParams.getLogCallbackInterface().onSuccess();
         } else {
-            Log.d(CLASSNAME, "startLogView : not allowed permission");
-            mParams.getLogResultCallBackInterface().onFailure(LogViewResultCode.FAIL_NOT_ALLOW_PERMISSION, LogViewResultMsg.FAIL_NOT_ALLOW_PERMISSION_MSG);
+            Log.e(CLASSNAME, "startLogView : not allowed permission");
+            mParams.getLogCallbackInterface().onFailure(LogResultCode.FAIL_NOT_ALLOW_PERMISSION, LogViewResultMsg.FAIL_NOT_ALLOW_PERMISSION_MSG);
         }
     }
 

@@ -2,11 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <!-- android 14 대응 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
+
     <application>
         <service android:name="com.ryusw.logview.service.LogService"
             android:exported="true"
             android:enabled="true"
             android:process=":externalProcess"
+            android:foregroundServiceType="dataSync"
             android:permission="android.permission.SYSTEM_ALERT_WINDOW"/>
     </application>
 </manifest>
