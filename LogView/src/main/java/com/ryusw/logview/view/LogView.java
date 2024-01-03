@@ -10,20 +10,24 @@ import android.text.style.ForegroundColorSpan;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.RadioButton;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatButton;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.widget.NestedScrollView;
 
 /**
  * UI 관련 로직 구현
- * */
+ */
 public class LogView extends ConstraintLayout {
 
     private ViewGroup mMainViewGroup;
@@ -40,6 +44,9 @@ public class LogView extends ConstraintLayout {
     private boolean mAutoScrollMode = false;
     private SpannableStringBuilder spBuilder = new SpannableStringBuilder();
     private int mCurrentLogColor = Color.WHITE;
+    private ViewGroup mSettingViewGroup;
+    private ToggleButton mBtnFoldWindow;
+    private boolean mStatusSettingMenuOpen = false;
 
     public LogView(@NonNull Context context) {
         super(context);
@@ -58,9 +65,10 @@ public class LogView extends ConstraintLayout {
 
     /**
      * 레이아웃 생성
+     *
      * @param context 생성자에서 받아온 context
      * @author swyu
-     * */
+     */
     private void doCreateLayout(Context context) {
         // main
         mMainViewGroup = (ViewGroup) LayoutInflater.from(context).inflate(getResourceId("layout", "view_log"), this, false);
@@ -77,18 +85,22 @@ public class LogView extends ConstraintLayout {
         // error
         mErrorViewGroup = mMainViewGroup.findViewById(getResourceId("id", "layout_error"));
 
+        //setting
+        mSettingViewGroup = mMainViewGroup.findViewById(getResourceId("id", "layout_setting"));
+        mBtnFoldWindow = mSettingViewGroup.findViewById(getResourceId("id", "btn_fold_window"));
+
         addView(mMainViewGroup);
     }
 
-    public void setAutoScrollMode(boolean flag){
+    public void setAutoScrollMode(boolean flag) {
         mAutoScrollMode = flag;
     }
 
-    public void setErrorViewVisibility(boolean visibility, int errorCode, String errorMsg){
+    public void setErrorViewVisibility(boolean visibility, int errorCode, String errorMsg) {
         mHandler.post(new Runnable() {
             @Override
             public void run() {
-                if(visibility){
+                if (visibility) {
                     mErrorViewGroup.bringToFront();
                     mErrorViewGroup.setVisibility(VISIBLE);
                     TextView contentView = mErrorViewGroup.findViewById(getResourceId("id", "tv_error_text"));
@@ -112,6 +124,37 @@ public class LogView extends ConstraintLayout {
     }
 
     /**
+     * Setting Menu 열기 / 닫기
+     */
+    public void setVisibilitySettingMenu() {
+        if (mStatusSettingMenuOpen) {
+            mStatusSettingMenuOpen = false;
+            mSettingViewGroup.setVisibility(View.GONE);
+        } else {
+            mStatusSettingMenuOpen = true;
+            mSettingViewGroup.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * 로그뷰 접기 버튼 Click Listener
+     */
+    public void setFoldWindowBtnClickListener(View.OnClickListener listener) {
+        mBtnFoldWindow.setOnClickListener(listener);
+    }
+
+    /**
+     * 로그뷰 접기 / 펼치기
+     */
+    public void setVisibilityScrollView() {
+        if (mScrollView.getVisibility() == View.GONE) {
+            mScrollView.setVisibility(View.VISIBLE);
+        } else {
+            mScrollView.setVisibility(View.GONE);
+        }
+    }
+
+    /**
      * 컨트롤 버튼 클릭 리스너 설정
      *
      * @param listener 클릭 리스너
@@ -131,6 +174,7 @@ public class LogView extends ConstraintLayout {
         mBtnStop.setOnClickListener(listener);
     }
 
+
     /**
      * 닫기 버튼 클릭 리스터
      *
@@ -141,10 +185,10 @@ public class LogView extends ConstraintLayout {
         mBtnClose.setOnClickListener(listener);
     }
 
-    public void setControlBtnImg(boolean isRunning){
+    public void setControlBtnImg(boolean isRunning) {
         // 실행중이라면 일시정지 버튼
-        if(isRunning) mBtnControl.setImageResource(getResourceId("drawable", "icon_pause"));
-        // 실행중이 아니라면 재생 버튼
+        if (isRunning) mBtnControl.setImageResource(getResourceId("drawable", "icon_pause"));
+            // 실행중이 아니라면 재생 버튼
         else mBtnControl.setImageResource(getResourceId("drawable", "icon_play"));
     }
 
@@ -164,7 +208,7 @@ public class LogView extends ConstraintLayout {
             public void run() {
                 mTvLog.setText(spBuilder);
 
-                if(mAutoScrollMode){
+                if (mAutoScrollMode) {
                     mScrollView.smoothScrollTo(0, mScrollView.getChildAt(0).getHeight());
                 }
             }
@@ -173,28 +217,28 @@ public class LogView extends ConstraintLayout {
 
     /**
      * 로그색상 지정
-     * */
-    private void setLogColor(String logType, String log){
+     */
+    private void setLogColor(String logType, String log) {
         String colorResName = "";
         // 줄바꿈 상태라면 기존 선택된 색상으로 설정
-        switch (logType){
+        switch (logType) {
             case "D/":
                 colorResName = "log_debug_color";
                 break;
             case "I/":
                 colorResName = "log_info_color";
                 break;
-            case "W/" :
+            case "W/":
                 colorResName = "log_warn_color";
                 break;
-            case "E/" :
+            case "E/":
                 colorResName = "log_error_color";
                 break;
             default:
                 break;
         }
 
-        if(!colorResName.isEmpty()){
+        if (!colorResName.isEmpty()) {
             mCurrentLogColor = ContextCompat.getColor(getContext(), getResourceId("color", colorResName));
         }
 
@@ -205,12 +249,13 @@ public class LogView extends ConstraintLayout {
     }
 
 
-    public void clearLogText(){
+    public void clearLogText() {
         this.mLog = "";
     }
 
     /**
      * 난독화 설정으로 인해 resId를 못가져오는 현상을 막기 위함
+     *
      * @param type 리소스 타입 (id, drawable, layout...)
      * @param name 가져오려는 리소스 이름
      * @return 라이브러리에 실제 할당된 resId
