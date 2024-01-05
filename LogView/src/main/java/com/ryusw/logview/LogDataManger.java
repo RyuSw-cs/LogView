@@ -46,6 +46,7 @@ public class LogDataManger {
     /**
      * 로그 필터 설정
      *
+
      * @param filter 적용하고자 하는 로그 필터
      * @author swyu
      */

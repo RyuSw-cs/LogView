@@ -9,6 +9,7 @@ import android.content.pm.ServiceInfo;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -160,7 +161,14 @@ public class LogService extends Service {
         mViewLog.setSettingBtnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //TODO 세팅버튼 레이아웃 추가
+                mViewLog.setVisibilitySettingMenu();
+            }
+        });
+
+        mViewLog.setFoldWindowBtnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mViewLog.setVisibilityScrollView();
             }
         });
 
