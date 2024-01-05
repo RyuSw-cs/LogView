@@ -3,4 +3,33 @@
     <style name="progressBarStyle" parent="@style/Theme.AppCompat">
         <item name="colorAccent">@color/appbar_color</item>
     </style>
+
+    <style name="permissionDialogStyle">
+        <!-- 꽉 채운 화면에 배경 없이 (custom view 영역만 보일 것이다.) -->
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowMinWidthMajor">100%</item>
+        <item name="android:windowMinWidthMinor">100%</item>
+
+        <!-- Dim 처리 -->
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:colorBackground">?attr/colorBackgroundFloating</item>
+        <item name="android:windowCloseOnTouchOutside">true</item>
+
+        <!-- Dialog를 센터로 표시 -->
+        <item name="android:windowIsFloating">true</item>
+    </style>
+
+
+    <style name="Theme.Transparent.LogPermission" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+    </style>
 </resources>

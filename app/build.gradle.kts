@@ -38,10 +38,7 @@ android {
 dependencies {
     implementation(project(":LogView"))
 
-//    implementation(files("aars/LogView_v1.0.0.0_debug_20231213.aar"))
-
-    implementation ("io.reactivex.rxjava3:rxandroid:3.0.0")
-    implementation ("io.reactivex.rxjava3:rxjava:3.0.7")
+//    implementation(files("aars/LogView_v1.0.0.0_debug_20240105.aar"))
 
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.appcompat:appcompat:1.6.1")

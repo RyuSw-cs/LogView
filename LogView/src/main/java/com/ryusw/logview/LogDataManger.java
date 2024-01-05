@@ -4,7 +4,8 @@ import android.os.Build;
 
 import com.ryusw.logview.callback.LogObservingCallBackInterface;
 import com.ryusw.logview.config.LogResultCode;
-import com.ryusw.logview.config.LogViewResultMsg;
+import com.ryusw.logview.config.LogResultMsg;
+import com.ryusw.logview.util.LogUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,6 +19,7 @@ import java.util.Arrays;
  * @author swyu
  */
 public class LogDataManger {
+    private static final String CLASSNAME = "LogDataManger";
     private String[] logFilter = new String[0];
     private final int logBufferSize = 2048 * 12;
     private Process logProcess;
@@ -91,6 +93,7 @@ public class LogDataManger {
      * @author swyu
      */
     public boolean clearLog() {
+        LogUtil.d(CLASSNAME, "clearLog", "start");
         // 로그 초기화 명령 (adb logcat -c)
         String[] clearCommand = {"logcat", "-c"};
         ProcessBuilder clearProcess = new ProcessBuilder(clearCommand);
@@ -110,6 +113,7 @@ public class LogDataManger {
                 }
             } else {
                 process.destroy();
+                LogUtil.d(CLASSNAME, "clearLog", "end");
             }
             return true;
         } catch (IOException e) {
@@ -125,9 +129,10 @@ public class LogDataManger {
      * @author swyu
      */
     public void startLog(boolean doLogClear, LogObservingCallBackInterface callback) {
+        LogUtil.d(CLASSNAME, "startLog", "start");
         if (doLogClear) {
             if (!clearLog()) {
-                callback.onFailure(LogResultCode.FAIL_LOG_CLEAR, LogViewResultMsg.FAIL_LOG_CLEAR_MSG);
+                callback.onFailure(LogResultCode.FAIL_LOG_CLEAR, LogResultMsg.FAIL_LOG_CLEAR_MSG);
                 return;
             }
         }
@@ -147,7 +152,7 @@ public class LogDataManger {
                     String line = br.readLine();
                     // 로그가 나오지 않음
                     if (line == null) {
-                        callback.onFailure(LogResultCode.FAIL_PROCESS_RESULT_NULL, LogViewResultMsg.FAIL_LOG_PROCESS_NULL_MSG);
+                        callback.onFailure(LogResultCode.FAIL_PROCESS_RESULT_NULL, LogResultMsg.FAIL_LOG_PROCESS_NULL_MSG);
                         logProcess.destroy();
                         br.close();
                     }
@@ -156,14 +161,15 @@ public class LogDataManger {
                         callback.onSuccess(line);
                         line = separator + br.readLine();
                     }
-
+                    LogUtil.d(CLASSNAME, "startLog", "end");
                     br.close();
                 } catch (InterruptedIOException interruptedException){
+                    LogUtil.e(CLASSNAME, "startLog", "Thread Exception");
                     interruptedException.printStackTrace();
                     stopLog();
                 } catch(Exception e) {
-                    e.printStackTrace();
-                    callback.onFailure(LogResultCode.FAIL_LOG_OBSERVER, LogViewResultMsg.FAIL_LOG_OBSERVING_ERROR_MSG);
+                    LogUtil.e(CLASSNAME, "startLog", "Observing Exception");
+                    callback.onFailure(LogResultCode.FAIL_LOG_OBSERVER, LogResultMsg.FAIL_LOG_OBSERVING_ERROR_MSG);
                     if (logProcess != null) {
                         logProcess.destroy();
                     }
@@ -179,6 +185,7 @@ public class LogDataManger {
      * @author swyu
      */
     public void stopLog() {
+        LogUtil.d(CLASSNAME, "stopLog", "start");
         if (logProcess == null) {
             return;
         }
@@ -195,8 +202,10 @@ public class LogDataManger {
                         logProcess.destroyForcibly();
                     }
                 } else {
+                    LogUtil.d(CLASSNAME, "stopLog", "end");
                     logProcess.destroy();
                 }
+                LogUtil.d(CLASSNAME, "stopLog", "Thread Interrupt");
                 logThread.interrupt();
             }
         }catch (Exception e){

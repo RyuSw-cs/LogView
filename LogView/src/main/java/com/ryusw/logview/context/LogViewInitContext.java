@@ -1,18 +1,20 @@
 package com.ryusw.logview.context;
 
-import com.ryusw.logview.callback.LogCallbackInterface;
+import com.ryusw.logview.callback.LogInitCallbackInterface;
 import com.ryusw.logview.exception.InvalidLogViewArgumentException;
+import com.ryusw.logview.util.LogUtil;
 
 import java.util.Arrays;
 
 public class LogViewInitContext {
-    private LogCallbackInterface logCallbackInterface;
+    private static String CLASSNAME = "LogViewInitContext";
+    private LogInitCallbackInterface logInitCallbackInterface;
     private String[] logFilter;
     private int pid;
     private boolean autoScrollFlag;
 
-    public LogCallbackInterface getLogCallbackInterface() {
-        return logCallbackInterface;
+    public LogInitCallbackInterface getLogCallbackInterface() {
+        return logInitCallbackInterface;
     }
 
     public String[] getLogFilter() {
@@ -28,7 +30,7 @@ public class LogViewInitContext {
     }
 
     public static final class Builder{
-        private LogCallbackInterface logCallbackInterface;
+        private LogInitCallbackInterface logInitCallbackInterface;
         private String[] logFilter = new String[0];
         private int pid = -1;
         private boolean autoScroll;
@@ -44,8 +46,8 @@ public class LogViewInitContext {
             return this;
         }
 
-        public Builder setLogResultCallBackInterface(LogCallbackInterface logCallbackInterface) {
-            this.logCallbackInterface = logCallbackInterface;
+        public Builder setLogResultCallBackInterface(LogInitCallbackInterface logInitCallbackInterface) {
+            this.logInitCallbackInterface = logInitCallbackInterface;
             return this;
         }
 
@@ -57,16 +59,22 @@ public class LogViewInitContext {
 
 
         public LogViewInitContext build() throws InvalidLogViewArgumentException {
+            LogUtil.d(CLASSNAME, "build", "start");
             LogViewInitContext context = new LogViewInitContext();
 
-            if(this.logCallbackInterface == null) {
+            if(this.logInitCallbackInterface == null) {
                 throw new InvalidLogViewArgumentException("callback interface is null");
             }
 
-            context.logCallbackInterface = this.logCallbackInterface;
+            context.logInitCallbackInterface = this.logInitCallbackInterface;
             context.logFilter = this.logFilter;
             context.pid = this.pid;
             context.autoScrollFlag = this.autoScroll;
+
+            LogUtil.i(CLASSNAME, "build", "log filter = " + Arrays.toString(context.logFilter));
+            LogUtil.i(CLASSNAME, "build", "autoScrollFlag = " + context.autoScrollFlag);
+
+            LogUtil.d(CLASSNAME, "build", "end");
             return context;
         }
     }

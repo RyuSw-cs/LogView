@@ -2,12 +2,11 @@ package com.ryusw.logview
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.Parcel
 import android.util.Log
 import android.widget.Button
 import android.widget.Toast
 import com.ryusw.logview.api.LogViewApi
-import com.ryusw.logview.callback.LogCallbackInterface
+import com.ryusw.logview.callback.LogInitCallbackInterface
 import com.ryusw.logview.context.LogViewInitContext
 
 
@@ -23,7 +22,8 @@ class MainActivity : AppCompatActivity() {
                     .setAutoScroll(true)
                     .setPid(android.os.Process.myPid())
                     .setLogFilter(arrayOf("Accessing hidden", "ViewRoot's"))
-                    .setLogResultCallBackInterface(object : LogCallbackInterface {
+                    .setLogResultCallBackInterface(object :
+                        LogInitCallbackInterface {
                         override fun onSuccess() {
                             Toast.makeText(this@MainActivity, "success", Toast.LENGTH_SHORT).show()
                         }

@@ -19,8 +19,6 @@ import androidx.annotation.Nullable;
 import com.ryusw.logview.LogDataManger;
 import com.ryusw.logview.callback.LogObservingCallBackInterface;
 import com.ryusw.logview.config.LogConstants;
-import com.ryusw.logview.config.LogResultCode;
-import com.ryusw.logview.config.LogViewResultMsg;
 import com.ryusw.logview.config.LogViewStateCode;
 import com.ryusw.logview.view.LogView;
 

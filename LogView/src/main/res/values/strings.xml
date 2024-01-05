@@ -2,4 +2,9 @@
 <resources>
     <string name="notification_content">로그뷰가 실행중입니다.</string>
     <string name="notification_title">로그뷰</string>
+
+    <!-- 권한 요청 다이얼로그 -->
+    <string name="content_allowed_permission">허용</string>
+    <string name="content_denied_permission">거절</string>
+    <string name="content_permission">해당 기능은 권한 설정이 필요합니다.\n권한내용 : SYSTEM_ALTER_WINDOW</string>
 </resources>

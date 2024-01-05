@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- base -->
     <color name="white">#ffffff</color>
-    <color name="appbar_color">#FF8400</color>
     <color name="black">#000000</color>
-    <color name="log_background">#2B2B2B</color>
     <color name="transparent">#00000000</color>
+
+    <!-- view -->
+    <color name="appbar_color">#FF8400</color>
+    <color name="log_background">#2B2B2B</color>
+    <color name="permission_divider">#F6F6F6</color>
+    <color name="permission_request_button">#FF8400</color>
+    <color name="permission_denied_button">#676767</color>
+    <color name="permission_background">#4D000000</color>
 
     <color name="log_debug_color">#368BBD</color>
     <color name="log_info_color">#6BB342</color>

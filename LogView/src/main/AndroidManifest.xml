@@ -6,6 +6,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 
     <application>
+
+        <activity android:name="com.ryusw.logview.view.LogPermissionActivity"
+            android:theme="@style/Theme.Transparent.LogPermission"/>
+
         <service android:name="com.ryusw.logview.service.LogService"
             android:exported="true"
             android:enabled="true"

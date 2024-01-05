@@ -205,8 +205,13 @@ public class LogView extends ConstraintLayout {
     }
 
 
+    /**
+     * 현재까지 기록된 로그 초기화
+     * @author swyu
+     * */
     public void clearLogText(){
         this.mLog = "";
+        mTvLog.setText(this.mLog);
     }
 
     /**
