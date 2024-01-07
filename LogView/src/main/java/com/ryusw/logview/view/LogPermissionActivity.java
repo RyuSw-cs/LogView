@@ -24,12 +24,20 @@ import com.ryusw.logview.util.LogUtil;
 import com.ryusw.logview.util.Util;
 
 public class LogPermissionActivity extends AppCompatActivity {
-    private static String CLASSNAME = "LogPermissionActivity";
+    private static final String CLASSNAME = "LogPermissionActivity";
     private static LogPermissionCallbackInterface logPermissionCallbackInterface;
     private static String callPackageName;
+    private static boolean isRunning = false;
 
     public static void startPermissionActivity(Intent intent, Context context, LogPermissionCallbackInterface callbackInterface) {
         LogUtil.d(CLASSNAME, "startPermissionActivity", "start");
+
+        if(isRunning){
+            LogUtil.v(CLASSNAME, "startPermissionActivity", "activity is running");
+            return;
+        }
+
+        isRunning = true;
         logPermissionCallbackInterface = callbackInterface;
         callPackageName = context.getPackageName();
         LogUtil.i(CLASSNAME, "startPermissionActivity", "calling package name = " + callPackageName);
@@ -86,6 +94,7 @@ public class LogPermissionActivity extends AppCompatActivity {
     protected void onDestroy() {
         LogUtil.d(CLASSNAME, "onDestroy", "start");
         super.onDestroy();
+        isRunning = false;
         overridePendingTransition(0,0);
         LogUtil.d(CLASSNAME, "onDestroy", "end");
     }
