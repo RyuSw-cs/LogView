@@ -9,7 +9,6 @@ import android.content.pm.ServiceInfo;
 import android.graphics.PixelFormat;
 import android.os.Build;
 import android.os.IBinder;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -32,7 +31,6 @@ public class LogService extends Service {
     private float mTouchY = 0f;
     private int mViewX = 0;
     private int mViewY = 0;
-    private Boolean mIsRunning = false;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -118,19 +116,14 @@ public class LogService extends Service {
         mViewLog.setControlBtnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // 실행
-                if (!mIsRunning) {
-                    mIsRunning = true;
+                if (!LogDataManger.getInstance().currentStatus()) { // 로그 기록 시작
+                    LogDataManger.getInstance().setStatus(true);
                     mViewLog.setControlBtnImg(true);
 
-                    mViewLog.clearLogText();
-                    // 프로세스가 다르므로 pid를 설정해야함.
-                    LogDataManger.getInstance().startLog(true, new LogObservingCallBackInterface() {
+                    LogDataManger.getInstance().startLog(new LogObservingCallBackInterface() {
                         @Override
                         public void onSuccess(String log) {
-                            if(mIsRunning){
-                                mViewLog.setErrorViewVisibility(false, LogViewStateCode.NO_ERROR_CODE, null);
-                            }
+                            mViewLog.setErrorViewVisibility(false, LogViewStateCode.NO_ERROR_CODE, null);
 
                             if (!LogDataManger.getInstance().isExistLogFilter(log)) {
                                 mViewLog.setLogText(log);
@@ -140,21 +133,22 @@ public class LogService extends Service {
                         public void onFailure(int errorCode, String errorMsg) {
                             mViewLog.setErrorViewVisibility(true, errorCode, errorMsg);
                             mViewLog.setControlBtnImg(false);
-                            mIsRunning = false;
-                            LogDataManger.getInstance().stopLog();
+                            LogDataManger.getInstance().release();
                         }
                     });
-                } else {
+                } else {    // 일시정지
+                    LogDataManger.getInstance().setStatus(false);
                     mViewLog.setControlBtnImg(false);
-                    mIsRunning = false;
-                    LogDataManger.getInstance().stopLog();
+                    LogDataManger.getInstance().release();
                 }
             }
         });
         mViewLog.setStopBtnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                LogDataManger.getInstance().stopLog();
+                LogDataManger.getInstance().release();
+                // 현재까지 기록된 로그뷰의 String을 초기화
+                mViewLog.clearLogText();
             }
         });
 
@@ -175,7 +169,7 @@ public class LogService extends Service {
         mViewLog.setCloseBtnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                LogDataManger.getInstance().stopLog();
+                LogDataManger.getInstance().release();
                 stopSelf();
             }
         });

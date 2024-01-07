@@ -71,6 +71,7 @@ public class LogViewInitContext {
             context.pid = this.pid;
             context.autoScrollFlag = this.autoScroll;
 
+            LogUtil.i(CLASSNAME, "build", "pid = " + context.pid);
             LogUtil.i(CLASSNAME, "build", "log filter = " + Arrays.toString(context.logFilter));
             LogUtil.i(CLASSNAME, "build", "autoScrollFlag = " + context.autoScrollFlag);
 
