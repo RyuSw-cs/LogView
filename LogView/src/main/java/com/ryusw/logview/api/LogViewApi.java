@@ -42,7 +42,7 @@ public class LogViewApi {
             LogPermissionActivity.startPermissionActivity(intent, mContext, new LogPermissionCallbackInterface() {
                 @Override
                 public void onAllowPermission() {
-                    LogUtil.d(CLASSNAME, "onAllowPermission", "Permission Allowed");
+                    LogUtil.v(CLASSNAME, "onAllowPermission", "Permission Allowed");
                     startLogViewService();
                     mParams.getLogCallbackInterface().onSuccess();
                 }
