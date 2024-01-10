@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.btn_create_log).setOnClickListener {
-            Log.d(TAG, "onCreate: log create")
+            Log.d(TAG, "onCreate: ")
         }
 
         findViewById<Button>(R.id.btn_exception).setOnClickListener {

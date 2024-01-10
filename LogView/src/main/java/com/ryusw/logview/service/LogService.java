@@ -146,6 +146,7 @@ public class LogService extends Service {
         mViewLog.setStopBtnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                mViewLog.setControlBtnImg(false);
                 LogDataManger.getInstance().release();
                 // 현재까지 기록된 로그뷰의 String을 초기화
                 mViewLog.clearLogText();

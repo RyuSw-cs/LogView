@@ -19,6 +19,7 @@ public class LogViewApi {
     private static final String CLASSNAME = "LogViewApi";
     private Context mContext;
     private LogViewInitContext mParams;
+    private boolean isRunning = false;
 
     public LogViewApi(Context context, LogViewInitContext params) {
         LogUtil.d(CLASSNAME, "Constructor", "start");
@@ -64,6 +65,7 @@ public class LogViewApi {
         serviceIntent.putExtra(LogConstants.EXTRATYPE_APP_PROCESS_ID, mParams.getPid());
         serviceIntent.putExtra(LogConstants.EXTRATYPE_APP_AUTO_SCROLL, mParams.getAutoScroll());
         mContext.startService(serviceIntent);
+
         LogUtil.d(CLASSNAME, "startLogViewService", "end");
     }
 

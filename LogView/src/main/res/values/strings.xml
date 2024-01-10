@@ -7,4 +7,7 @@
     <string name="content_setting_permission">설정</string>
     <string name="content_cancle_permission">취소</string>
     <string name="content_permission">해당 기능은 권한 설정이 필요합니다.\n권한내용 : SYSTEM_ALTER_WINDOW</string>
+    
+    <string name="category_setting_screen_maximize">로그뷰 펼치기</string>
+    <string name="category_setting_screen_minimize">로그뷰 접기</string>
 </resources>

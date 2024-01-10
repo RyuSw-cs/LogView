@@ -25,6 +25,8 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 import androidx.core.widget.NestedScrollView;
 
+import java.io.InterruptedIOException;
+
 /**
  * UI 관련 로직 구현
  */
@@ -152,6 +154,7 @@ public class LogView extends ConstraintLayout {
         } else {
             mScrollView.setVisibility(View.GONE);
         }
+        mSettingViewGroup.setVisibility(View.GONE);
     }
 
     /**
@@ -186,10 +189,12 @@ public class LogView extends ConstraintLayout {
     }
 
     public void setControlBtnImg(boolean isRunning) {
-        // 실행중이라면 일시정지 버튼
-        if (isRunning) mBtnControl.setImageResource(getResourceId("drawable", "icon_pause"));
-            // 실행중이 아니라면 재생 버튼
-        else mBtnControl.setImageResource(getResourceId("drawable", "icon_play"));
+        if (isRunning) {    // 실행중이라면 일시정지 버튼
+            mBtnControl.setImageResource(getResourceId("drawable", "icon_pause"));
+        }
+        else {  // 실행중이 아니라면 재생 버튼
+            mBtnControl.setImageResource(getResourceId("drawable", "icon_play"));
+        }
     }
 
     /**
@@ -198,21 +203,34 @@ public class LogView extends ConstraintLayout {
      * @param log Process에서 받은 Log String
      * @author swyu
      */
-    public synchronized void setLogText(String log) {
+    public void setLogText(String log) {
         // Sub Thread에서 텍스트 추가
-        String logLevel = log.substring(1, 3);
-        setLogColor(logLevel, log);
-        // Main Thread에서 View Update
-        mHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                mTvLog.setText(spBuilder);
-
-                if (mAutoScrollMode) {
-                    mScrollView.smoothScrollTo(0, mScrollView.getChildAt(0).getHeight());
+        try {
+            Thread thread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String logLevel = log.substring(1, 3);
+                    setLogColor(logLevel, log);
                 }
-            }
-        });
+            });
+
+            thread.start();
+            thread.join();
+
+            // Main Thread에서 View Update
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    mTvLog.setText(spBuilder);
+
+                    if (mAutoScrollMode) {
+                        mScrollView.smoothScrollTo(0, mScrollView.getChildAt(0).getHeight());
+                    }
+                }
+            });
+        } catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -254,6 +272,7 @@ public class LogView extends ConstraintLayout {
      * */
     public void clearLogText(){
         this.mLog = "";
+        spBuilder.clear();
         mTvLog.setText(this.mLog);
     }
 

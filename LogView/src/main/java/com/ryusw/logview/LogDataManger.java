@@ -98,8 +98,10 @@ public class LogDataManger {
 
         try {
             Process process = clearProcess.start();
+            // 프로세스 종료까지 대기
             process.waitFor();
-            // 초기화 후 프로세스 종료
+
+            // 프로세스 종료
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 if (process.isAlive()) {
                     process.destroyForcibly();
